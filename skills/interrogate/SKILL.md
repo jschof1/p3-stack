@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Interrogate
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Spawn one reviewer per configured model to adversarially review code changes. Each model gets the same prompt and rubric. The adversarial signal comes from model diversity, not assigned personas.
 
 The deliverable is a synthesized verdict. Do NOT auto-apply changes.
@@ -33,12 +35,12 @@ Write one clear paragraph. If you're unsure about the intent, ask the user befor
 
 ## Step 3, Spawn Reviewers
 
-Launch all reviewers in a single turn, one `delegate_task` per reviewer with `mode: "async"`. Use the `interrogate reviewers` line in `p3-models.md`, one reviewer per entry, labeled Reviewer A, B, C, and so on for the configured entry count. Resolve each entry's provider and model through `orchestrator_capabilities`. If the line is missing, run `setup-p3` first.
+Launch all reviewers in a single turn, one `delegate_task` per reviewer with `mode: "async"`. Use the `interrogate reviewers` line in `p3-models.md`, one reviewer per entry, labeled Reviewer A, B, C, and so on. Resolve explicit targets through `orchestrator_capabilities`. Without a role line, choose distinct permitted providers from the live catalogue, including a provider other than the author's when available.
 
 For each reviewer:
 - The brief is self-contained. A delegated reviewer gets only the brief, never your context.
 - The brief says read-only: inspect only, no writes, no git commands that change state.
-- For an `auto` or `inherit-parent` entry, omit the model so that reviewer runs on the parent model.
+- For `auto` or `inherit-parent`, resolve the parent's advertised provider and model into an explicit target.
 
 If `delegate_task` rejects a configured entry, say so and run that reviewer on the closest available model of the same family from `orchestrator_capabilities`. Do not block the review on it.
 
@@ -48,7 +50,7 @@ Read `references/reviewer-prompt.md` and fill in the template with:
 3. The review rubric from `references/rubric.md`
 4. The code-quality lens from `references/code-quality-review.md`
 
-The same filled template goes to all reviewers, so every model applies the code-quality lens. Drain results with `task_status`.
+The same filled template goes to all reviewers, so every model applies the code-quality lens. Follow the tool's `next` instruction and read completed results.
 
 ## Step 4, Synthesize
 

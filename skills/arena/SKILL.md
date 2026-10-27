@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Arena
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Fan out N parallel attempts at the same task. Read every candidate end to end. Pick the strongest as the base. Graft the best ideas from the others into it. Verify the synthesized result.
 
 ## Start
@@ -25,8 +27,8 @@ The N candidates will receive the same prompt, so the prompt is the contract.
 
 1. State the artifact each candidate is producing.
 2. Derive the rubric. State what success looks like for *this* task, then turn it into 3-6 concrete gradeable criteria. The rubric is the picker's tool in Phase D. Candidates only see the task.
-3. Pick the runners. Use the `arena runners` line in `p3-models.md`, resolved against `orchestrator_capabilities`. If the file or that line is missing, run `setup-p3` or pick one model per available provider from `orchestrator_capabilities`. An `auto` or `inherit-parent` entry in this line or the cross-judge line means the parent model, so omit `model` for it. If `delegate_task` rejects a configured entry, run that seat on the closest valid model of the same provider from its error message and say so. Spawn more when the arena covers multiple design directions. Same model N times when the work is generation-bound rather than judgment-sensitive.
-4. Assign output paths. Each candidate writes to its own location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the **separate-before-serializing-shared-state** principle skill. A candidate that needs its own worktree gets one through `t3_thread_launch` with a `workspaceStrategy`. One writer per worktree.
+3. Pick the runners. Resolve the `arena runners` line in `p3-models.md` against `orchestrator_capabilities`. Without that line, choose one model per permitted provider from the live catalogue. Resolve `auto` and `inherit-parent` into the parent's advertised provider and model. Pass explicit targets. Report rejected or unavailable choices without silently substituting. Spawn more when the arena covers multiple design directions. Use the same model N times when the work is generation-bound rather than judgment-sensitive.
+4. Assign output paths. Each candidate writes to its own location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the **separate-before-serializing-shared-state** principle skill. A candidate that needs its own worktree uses `delegate_task` with `isolation: "worktree"`. One writer per worktree.
 
 ## Phase B: Fan out
 
@@ -34,7 +36,7 @@ Spawn all N candidates in one turn with `delegate_task`, one per runner entry, e
 
 Each rationale names the alternatives the candidate considered and what it rejected.
 
-Drain the candidates with `task_status`. If a candidate fails to produce output, proceed with N-1 and note the dropout in the synthesis record.
+Follow the tool's `next` instruction and collect completed candidate results. If a candidate fails to produce output, proceed with N-1 and note the dropout in the synthesis record.
 
 ## Phase C: Cross-judge
 

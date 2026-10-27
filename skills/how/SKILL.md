@@ -6,9 +6,11 @@ disable-model-invocation: true
 
 # How
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Explore the codebase to answer "how does X work?" questions. Produce architectural explanations at the level of a senior engineer onboarding onto a subsystem, enough to build a working mental model, not so much that it reads like annotated source code.
 
-Every spawn below is a `delegate_task` with a self-contained brief; the child gets only the brief, never this conversation. Each brief says it is read-only: inspect only, no writes, no git commands. Resolve each role's model from `p3-models.md` via `orchestrator_capabilities`. Never hardcode a slug. If the role line is missing, run `setup-p3` or use the parent's model.
+Every spawn below is a `delegate_task` with a self-contained brief; the child gets only the brief, never this conversation. Each brief says it is read-only: inspect only, no writes, no git commands. Resolve each role's model from `p3-models.md` via `orchestrator_capabilities`. Never hardcode a slug. If the role line is missing, resolve the parent's advertised model. Use another permitted provider for an independent review.
 
 ## Step 1. Assess Complexity
 
@@ -23,7 +25,7 @@ When in doubt, take the simple path.
 
 Decompose the question into 2 to 4 exploration angles, each a distinct slice of the subsystem. Spawn all explorers in a single message, `mode: "async"`, model from the `how explorer` role.
 
-Each explorer's brief is `references/explorer-prompt.md` with its angle filled in. Drain with `task_status`, then go to Step 3.
+Each explorer's brief is `references/explorer-prompt.md` with its angle filled in. Read completed results, following the tool's `next` instruction, then go to Step 3.
 
 ## Step 2b. Direct Explain (simple questions)
 

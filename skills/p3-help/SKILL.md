@@ -5,6 +5,8 @@ description: Guides users through p3-stack setup, /p3-mode, and picking the skil
 
 # P3 help
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Answer the user's question about p3-stack, hand them a prompt they can send, and link the file the answer came from. For a help question, don't start the work. The user asked how, and a p3-stack run spends real tokens, so let them send the prompt.
 
 A message that asks for work, such as "use p3-stack to fix this bug", is not a help question. Read [`p3-mode`](../p3-mode/SKILL.md), do the work under it, and mention once that invoking `/p3-mode` keeps the work in this style.
@@ -15,12 +17,12 @@ This file maps questions to the skills and playbooks that hold the answers. Thos
 
 Infer the need from the message and the conversation. A named situation, such as "which skill reviews a PR?", goes straight to its section. If the need is still unclear, ask one multiple-choice question with these options, then answer only the section they pick: get set up, start a task with `/p3-mode`, pick a skill for a situation, fix a run that went wrong, or make p3-stack my own.
 
-Check the state that changes the answer, and mention it only when it does. No `p3-models.md` means `/setup-p3` hasn't run for this user, so every role uses its default model. No `verify-*` skill or other app harness in the project means agents have no scripted way to drive the app; mention `/create-verification-skill` when the question is about proving a change works.
+Check the state that changes the answer, and mention it only when it does. Read the project's `p3-models.md`, otherwise `~/.agents/p3-models.md`. Without either, resolve the parent's advertised model from the live catalogue, using another permitted provider for independent review. `/setup-p3` is optional for saving role choices. No `verify-*` skill or app harness means there is no scripted way to drive the app; mention `/create-verification-skill` when the question is about proving a change works.
 
 ## Get set up
 
 1. Install by cloning the repo and running `./install.sh`. It links every skill into `~/.agents/skills/`, where T3 Code reads skills; `./install.sh --project /path/to/repo` targets a project's `.agents/skills/` instead.
-2. Run [`/setup-p3`](../setup-p3/SKILL.md). It asks for a reasoning budget, maps a model to each role, and writes `p3-models.md`. The file applies to new sessions.
+2. Optionally run [`/setup-p3`](../setup-p3/SKILL.md). It maps models and reasoning options to roles and writes `p3-models.md`. Skills read the file on their next invocation.
 3. Start a real task with `/p3-mode`, a goal, and a check that can pass or fail.
 
 Installing changes nothing until the user invokes a skill. Only `/p3-help` loads from the user's words. The [README](../../README.md) has the details. Offer to word their first prompt with them.
@@ -98,10 +100,10 @@ Principles are one-rule skills that `/p3-mode` reads and cites in its replies. T
 |---|---|
 | The mode stopped applying after a few turns | Start each new task with `/p3-mode`; there's no mode to toggle on. |
 | A question got treated as the next step of the last task | Say "new task", or say the turn doesn't need the mode. |
-| A new model choice had no effect | The file from `/setup-p3` applies to new sessions. Start one. |
+| A new model choice had no effect | Check the project override, then `~/.agents/p3-models.md`, and validate the entry against the live catalogue. |
 | Runs cost more than expected | See the cost paragraph under Get set up. |
 | A skill didn't load on its own | Only `/p3-help` loads from the user's words. The others load when the user invokes them by name or when `/p3-mode` runs them, and it doesn't run every skill. |
-| Parallel agents overwrote each other | Give each worker its own worktree through `t3_thread_launch`, and keep one writer per worktree. |
+| Parallel agents overwrote each other | Give each worker its own worktree through `delegate_task` with `isolation: "worktree"`, and keep one writer per worktree. |
 | An overnight run moved but finished nothing | It needs a check that can pass or fail, not a duration. |
 | The reply claims success from a green build | Ask for the real command, flow, stored value, or profile. That's the prove-it-works principle. |
 

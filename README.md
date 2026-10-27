@@ -4,12 +4,12 @@ p3-stack is [pstack](https://github.com/cursor/plugins/tree/main/pstack) rebuilt
 
 pstack is poteto's answer to AI slop code. It turns an agent into an engineering team: one mode skill that routes to playbooks, principles that ground every decision, and verification strict enough that you can parallelize with confidence. p3-stack keeps that system and rewires the mechanics to T3 Code's primitives:
 
-- **Delegation.** `delegate_task` child agents replace Cursor's Task tool, with per-role providers and models resolved from `orchestrator_capabilities`. Cross-model panels are native.
-- **Worktrees.** `t3_thread_launch` binds a worker to its own worktree and branch. One writer per worktree, enforced by the app instead of by advice.
+- **Delegation.** Native subagents handle supported work on the parent's provider in the current turn. `delegate_task` handles other providers, background work, and separate checkouts. Explicit targets come from `orchestrator_capabilities`.
+- **Worktrees.** `delegate_task` with `isolation: "worktree"` binds a worker to its own checkout. Top-level threads need an explicit user request.
 - **Watching.** `watch_pull_request` wakes the thread when checks finish, someone comments, or the branch conflicts. No polling loops.
-- **Scheduling.** `schedule_task` runs audits and overnight cadences even when no turn is active. No `/loop`.
+- **Scheduling.** When requested, `schedule_task` runs audits and overnight cadences even when no turn is active. No `/loop`.
 - **Memory.** `t3_thread_read` and `t3_thread_search` replace mining Cursor transcript files.
-- **Proof.** `preview_*` browser tools and `device_*` simulators replace external control skills. Screenshots and recordings land in the thread.
+- **Proof.** Use repository checks and app harnesses for edits. Requested browser work uses `preview_*`; simulator work uses `device_*` and its returned driver. Screenshots and recordings land in the thread.
 
 ## Install
 
@@ -21,9 +21,15 @@ cd p3-stack
 
 `install.sh` links every `skills/*` directory into `~/.agents/skills/`, where T3 Code reads skills. Use `./install.sh --project /path/to/repo` to install into a project's `.agents/skills/` instead.
 
+Existing paths are preserved by default. Use `./install.sh --replace` to save conflicting paths under `~/.agents/skill-backups/` before replacing them. The backup preserves directory contents and symlink text for restoration to the original location. Re-running the installer leaves correct links unchanged.
+
+For provider discovery, run `./install.sh --codex` and `./install.sh --claude`. They link the same source into `~/.codex/skills/` and `~/.claude/skills/`. `--project` and `--replace` work with either option too. Keep the checkout in a permanent location such as `~/.agents/skills/p3-stack`; moving it breaks its links. Start a fresh T3 chat after first installation so the provider reloads its skill catalogue.
+
+Check each installation with `./install.sh --check`, `./install.sh --codex --check`, and `./install.sh --claude --check`. If a separate skills manager restores old entries, configure it to preserve these links. Run installer regression tests with `python3 -m unittest discover -s tests -v`.
+
 ## Get started
 
-1. Run `/setup-p3`. It reads `orchestrator_capabilities` and writes `p3-models.md`, mapping each role (code, judgment, the review panels) to a provider and model you actually have.
+1. Optionally run `/setup-p3` to save role choices in the project's `p3-models.md` or `~/.agents/p3-models.md`. Without a configuration, skills resolve defaults from the live catalogue and use another permitted provider for independent review.
 2. Use `/p3-mode` whenever you want rigorous work. It reads the request, picks a playbook, and runs the other skills as the steps need them.
 3. Stuck or unsure which skill fits? Ask `/p3-help`.
 
@@ -37,7 +43,11 @@ architect, arena, automate-me, benchmark-checklist, blast-radius, bro, correct, 
 
 ## Principles
 
-The twenty-four principle skills are indexed inside `p3-mode` and referenced by the other skills by name.
+The principle skills are indexed inside `p3-mode` and referenced by the other skills by name.
+
+## Upstream
+
+See [UPSTREAM.md](UPSTREAM.md) for the reviewed Cursor revision and the scope of this update. The existing skill set and playbooks remain intact. [T3 Code execution](skills/p3-mode/references/t3-code.md) defines the shared adapter rules.
 
 ## Credit
 

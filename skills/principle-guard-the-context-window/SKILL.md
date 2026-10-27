@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Guard the Context Window
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 The context window is finite and non-renewable within a session. Every token should be worth its cost.
 
 **Why:** Context overflow degrades reasoning quality, creates compression artifacts, and halts progress.

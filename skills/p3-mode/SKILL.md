@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # P3 mode
 
-Skills are invoked by name (`/p3-mode`). There are no mode toggles.
+Skills are invoked by name (`/p3-mode`). There are no mode toggles. Follow [T3 Code execution](references/t3-code.md) for tool routing and lifecycle rules. Bundled skills live at `../<name>/SKILL.md` from this file. Give workers this file's absolute path so they can resolve them.
 
 ## Non-negotiables
 
@@ -25,7 +25,7 @@ Remaining triggers:
 - Docs, RFCs, readmes, PR descriptions, or commit messages → the **technical-writing** skill (`/technical-writing`).
 - Before commit → the **unslop** skill over the diff.
 - Before review → the **no-comments** skill (`/no-comments`).
-- Shipping UI / device / CLI → prove it on the real surface. Use the `preview_*` tools for browser UIs and the `device_*` tools for simulators, with `preview_recording_start`/`preview_recording_stop` and `device_screenshot` as evidence. For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
+- Shipping UI / device / CLI → prove it through the repository tests and app harness. Use `preview_*` for requested browser work and `device_*` with its returned driver for simulator work. Follow the shared T3 Code execution rules for evidence and cleanup. For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
 - Running a benchmark, measuring perf yourself, or reporting a speedup or regression you measured → the **benchmark-checklist** skill before you report or act on the number.
 - Any PR-status request → the **Babysit** playbook (`playbooks/babysit.md`). That includes "babysit this", "get it green", "address the bugbot comments", and the commonest phrasing, "check on PR X" / "anything outstanding on X". Never triggered by merely opening a PR. Declare its mode before arming the watch. The playbook's step 1 owns the request-to-mode mapping.
 - Asked to land or ship a green stack → the **Shipping** playbook (`playbooks/shipping.md`). Green is not safe. Nothing gets armed before an independent per-PR verdict, and only the contiguous verified run from the root lands.
@@ -42,7 +42,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 - **Laziness Protocol** (**principle-laziness-protocol**). Refactoring, sizing a diff, or tempted to add abstractions, layers, or signal threading. Bias to deletion and the smallest change that solves the problem.
 - **Foundational Thinking** (**principle-foundational-thinking**). Before writing logic: core types and data structures, scaffold-vs-feature sequencing, what concurrent actors share.
 - **Redesign from First Principles** (**principle-redesign-from-first-principles**). Integrating a new requirement into an existing design. Redesign as if it had been foundational from day one.
-- **Attack the Premise** (**principle-attack-the-premise**). Two or more fixes that share one premise have failed the same gate. Take a census of which actors hold the imbalance before the next fix, then question the premise instead of writing another fix that assumes it.
+- **Attack the Premise** (**principle-attack-the-premise**). Two or more fixes that share one premise have failed the same gate. Write the premise down and test it directly before writing another fix that assumes it.
 - **Subtract Before You Add** (**principle-subtract-before-you-add**). Sequencing an addition, refactor, or rewrite. Remove dead weight first, then build on the simpler base.
 - **Minimize Reader Load** (**principle-minimize-reader-load**). Reviewing or shaping code that's hard to trace. Count layers and hidden state, collapse one-caller wrappers, shrink mutable scope.
 - **Outcome-Oriented Execution** (**principle-outcome-oriented-execution**). Planned rewrites and migrations with explicit phase boundaries. Converge on the target architecture, don't preserve throwaway compatibility states.
@@ -62,9 +62,9 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 **Verification**
 
 - **Prove It Works** (**principle-prove-it-works**). After a task, before declaring done. Verify against the real artifact, not a proxy or "it compiles".
-- **Fix Root Causes** (**principle-fix-root-causes**). Debugging. Trace each symptom to its root cause, reproduce first, ask why until you reach it.
+- **Fix Root Causes** (**principle-fix-root-causes**). Debugging. Trace the symptom to the first wrong decision. A guard is a fix only when the state it handles is legitimate.
 - **Sequence Work into Verifiable Units** (**principle-sequence-verifiable-units**). Multi-step work (sweeps, migrations, runs of similar edits) and how you stack commits and PRs. Break work into small units that each end in a check, verify each before the next, and order delivery so the sequence proves itself.
-- **Test Behavior, Not Implementation** (**principle-test-behavior-not-implementation**). Writing, changing, or keeping a test. Call the code the way its users do and assert the result against a literal expected value. If the test would still pass when every imported function returns `undefined`, rewrite the assertion or delete the test.
+- **Test Behavior, Not Implementation** (**principle-test-behavior-not-implementation**). Writing, changing, or keeping a test. Assert what users can observe. The test should fail when that behavior breaks and pass when only the internals change.
 - **Explain the Number** (**principle-explain-the-number**). Before you trust, report, or act on a number you measured (a speedup, a regression, a throughput, a latency, or an eval result). Find what limits it, and rule out that it measured something other than the work you think.
 
 **Delegation**
@@ -78,7 +78,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 ## Autonomy
 
-**Just do it.** Use any MCP tool. Reversible work and external actions (team chat, ticket updates, kicking off evals) proceed without asking.
+**Just do it.** Complete authorized work and its necessary verification. Follow the user's approval rules for external actions and messages.
 
 **Always pause** for irreversible writes: force-push to shared branches, deploys, data deletion, customer messages.
 
@@ -88,9 +88,9 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 ## Subagents
 
-**Spawn every worker with `delegate_task`.** Code-writing delegates and ad-hoc helpers open their brief by pointing the worker at `agents/p3-agent.md`, which sends it to this file. Routed workflow skills (`how`, `why`, `interrogate`, `reflect`, `swarm`) set their own roles for diverse-model review. Respect what the skill prescribes.
+The parent runs the playbook. Delegate bounded steps, not the entire playbook. Follow [T3 Code execution](references/t3-code.md) to choose native subagents or `delegate_task`. Code helpers read `agents/p3-agent.md` and this file through the absolute paths in their brief. Routed workflow skills (`how`, `why`, `interrogate`, `reflect`, `swarm`) set their own roles for diverse-model review.
 
-**Defaults for every `delegate_task` call.** `mode: "async"` for background work, then drain with `task_status` (stop with `task_cancel`). T3 child agents get only the brief and never inherit parent context, so every brief stands alone: the goal, file pointers not inlined context, constraints, and the report format you expect. Pick models by named role, never by slug. `setup-p3` writes the role lines to `p3-models.md`, resolved against `orchestrator_capabilities`. Code delegates tier by difficulty. The hardest changes (cross-cutting design, gnarly concurrency, subtle algorithms) read `hardest tasks`, whether the task needs judgment on vague intent or is a precisely specified sequence of steps to execute to the letter. Trivial mechanical edits go to your fast code model. Per-role lines in `p3-models.md` override the model choices in the routed skills (`how`, `why`, `arena`, `swarm`, `architect`, `interrogate`, `reflect`). A role with no line keeps its default, and a role line of `inherit-parent` or `auto` runs that role on the parent chat model. Each code playbook's configured model comes from its line (`feature, refactoring`, `bug-fix`, `perf-issue`, or `hillclimb`). Prose and judgment read `judgment and prose`. Use `t3_thread_launch` only when a worker needs its own thread, worktree, or branch, and keep one writer per worktree.
+**Defaults for delegation.** Read role choices from the project or global `p3-models.md` and resolve them through `orchestrator_capabilities`. Without a role line, use the parent's advertised model, or another permitted provider for an independent review. Pass explicit targets and advertised settings. Code playbooks read `feature, refactoring`, `bug-fix`, `perf-issue`, or `hillclimb`. The hardest changes read `hardest tasks`. Prose and judgment read `judgment and prose`. Use `isolation: "worktree"` for a separate checkout. Follow the tool's `next` instruction for async work and read results on completion. Do not poll running tasks.
 
 You own every delegate's work. Review the diff and write your own summary, don't pass through what it said. A second opinion is the same prompt against a different model. Agreement is high-signal.
 
@@ -135,7 +135,7 @@ A large or cross-cutting effort (a migration across many call sites, an ambitiou
 - **Babysit.** Driving a PR or a stack to merge-ready: conflicts, review threads, CI. Arm `watch_pull_request`, end the turn, triage on wake. `playbooks/babysit.md`.
 - **Shipping.** The half after Babysit. Independently verifying a green stack, then landing the contiguous verified run bottom-up through `gh`, watching each landing with `watch_pull_request`. `playbooks/shipping.md`.
 - **Autonomous run.** A long task to drive to completion without stopping ("run until done"). `playbooks/autonomous-run.md`.
-- **Orchestrate.** A standing project handed to one coordinator thread: multi-day, many stacked PRs, dozens to hundreds of delegates, minimal human turns ("run this whole project", "own this migration until it lands"). Workers launch with `t3_thread_launch`, recurring ticks run through `schedule_task`. Distinct from Autonomous run, which drives one task to a predicate. Work one agent could finish inside the session's budget routes there, not here, however program-shaped the phrasing sounds. `playbooks/orchestrate.md`.
+- **Orchestrate.** A standing project handed to one coordinator thread: multi-day, many stacked PRs, dozens to hundreds of delegates, minimal human turns ("run this whole project", "own this migration until it lands"). Workers use `delegate_task` with `isolation: "worktree"` when needed. Schedule recurring ticks only when requested. Distinct from Autonomous run, which drives one task to a predicate. Work one agent could finish inside the session's budget routes there, not here, however program-shaped the phrasing sounds. `playbooks/orchestrate.md`.
 - **Autopilot-full.** A queue of independent PRs run to merged with full autonomy. One owner per PR carries build through merge, links each PR with `link_pull_request`, and the root swarm-verifies each PR before its owner merges ("autopilot this queue", "full autopilot", one-owner-per-PR programs). `playbooks/autopilot-full.md`.
 - **Autopilot-stack.** A queue of changes built and verified with full autonomy, delivered as one linear reviewed base-branch stack the operator lands, every layer linked with `link_pull_request` ("autopilot-stack", "stack them, don't ship", "build the stack, I'll land it"). `playbooks/autopilot-stack.md`.
 - **Session pickup.** Resuming or taking over a prior agent's in-flight work from a thread (`t3_thread_read`, `t3_thread_search`), a delegated task, or a pushed branch. `playbooks/session-pickup.md`.
