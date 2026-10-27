@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Automate me
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 A guided flow for turning the user's working conventions into a skill agents will follow. The output is one `-mode` skill tailored to them (e.g. `jay-mode`, `priya-mode`).
 
 This skill orchestrates three others: an inline mining pass (see step 1), the `authoring-a-skill` playbook (authoring), and the **unslop** skill (prose discipline). It sequences them. It doesn't replace them.
@@ -28,7 +30,7 @@ Update mode changes the rest of the flow:
 
 Scope the mining to the current project before fanning out. Use `t3_thread_search` and `t3_thread_read` on this project's threads only. Don't read threads from other projects. That crosses project boundaries and reads private chats from unrelated work.
 
-Survey recent threads within that scope for recurring patterns. Run multiple parallel `delegate_task` briefs (`mode: "async"`) across slices of history (e.g. last 2-4 weeks, split into 3 slices so each has enough material). Every brief stands alone: child agents get only the brief, never the parent's context. Each brief names the project, its slice, and the signals below; says read-only, inspect only, no writes; and asks for a short structured list of patterns seen with thread pointers. Drain with `task_status`. Default signals worth hunting:
+Survey recent threads within that scope for recurring patterns. Run multiple parallel `delegate_task` briefs (`mode: "async"`) across slices of history (e.g. last 2-4 weeks, split into 3 slices so each has enough material). Every brief stands alone: child agents get only the brief, never the parent's context. Each brief names the project, its slice, and the signals below; says read-only, inspect only, no writes; and asks for a short structured list of patterns seen with thread pointers. Read completed results, following the tool's `next` instruction. Default signals worth hunting:
 
 - Response preferences (length, tone, format, "dumb it down" corrections)
 - Delegation habits (subagents, models, specialized workflows, parallelism)

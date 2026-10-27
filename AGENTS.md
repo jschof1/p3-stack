@@ -12,16 +12,16 @@ If you are a delegated worker, your brief names exactly one file. Write only tha
 
 | pstack | p3-stack |
 |---|---|
-| `Task` tool, `subagent_type`, `run_in_background` | `delegate_task` with a self-contained brief; `mode: "async"` for background work; `task_status` to drain; `task_cancel` to stop |
+| `Task` tool, `subagent_type`, `run_in_background` | Native subagents for supported same-provider work in this turn, otherwise `delegate_task`; self-contained briefs, explicit catalogue targets, completion wakes, and `task_cancel` to stop |
 | Model slugs (`claude-opus-5-5-max`, `grok-4.7-xhigh-fast`, `gpt-5.6-sol-max`) | Named roles resolved from `orchestrator_capabilities` by `setup-p3` (role names below). Never hardcode a slug. |
-| "cloud agent", `environment: "cloud"`, `cloud_base_branch` | A delegated child task. Use `t3_thread_launch` only when the worker needs its own top-level thread, worktree, or branch. |
-| "each worker gets its own worktree or branch" | `t3_thread_launch` with `workspaceStrategy`: `{"type":"worktree","baseRef":...,"branch":...}`, `{"type":"existing_worktree","worktreePath":...}`, or `{"type":"root"}`. One writer per worktree. |
-| `/loop`, poll loops, `scripts/watch-pr` | `watch_pull_request`: T3 watches the PR and wakes the thread on checks finishing, new comments, or conflicts. Arm it, end the turn, triage on wake. For other cadences use `schedule_task`. |
+| "cloud agent", `environment: "cloud"`, `cloud_base_branch` | A delegated child task. Use `isolation: "worktree"` for a separate checkout. Top-level threads require an explicit user request. |
+| "each worker gets its own worktree or branch" | `delegate_task` with `isolation: "worktree"`. T3 creates the checkout. One writer per worktree. |
+| `/loop`, poll loops, `scripts/watch-pr` | `watch_pull_request`: T3 watches the PR and wakes the thread on checks finishing, new comments, or conflicts. Arm it, end the turn, triage on wake. For requested scheduled cadences use `schedule_task`. Never schedule delegate polling. |
 | Hourly audit ticks, recurring runs | `schedule_task` with `{"type":"interval","everyMs":...}` or `{"type":"fixed_time","timeOfDay":...,"weekdays":[...]}`; `run_scheduled_task_now` for an immediate run. |
 | Stack bookkeeping with `gt`, manual PR lists | `link_pull_request` for every layer, immediately; `list_thread_pull_requests` returns the stack bottom to top. |
 | `agent-transcripts/*.jsonl` mining | `t3_thread_read`, `t3_thread_search`; `t3_queue_list`/`t3_queue_read`/`t3_queue_edit`/`t3_queue_reorder`/`t3_queue_cancel`/`t3_queue_promote_to_steer` for queued input. |
 | `AskQuestion` | Ask plainly in the thread. `t3_pending_request_list`/`t3_pending_request_read`/`t3_pending_request_respond` answer questions in other threads. |
-| `control-ui`, `control-cli` (from cursor-team-kit) | `preview_*` browser tools and `device_*` simulator tools; `preview_recording_start`/`preview_recording_stop` and `device_screenshot` for evidence; `browser.preview` shows a file to the user. |
+| `control-ui`, `control-cli` (from cursor-team-kit) | Use the project harness to verify edits. For requested browser work, start with `preview_status`. For simulators, use `device_list`, `device_open`, then the returned `agent-device` launcher. Show requested HTML with `html_preview`, then `html_render`. |
 | `~/.cursor/rules/pstack-models.mdc`, `/add-plugin` | `setup-p3` writes `p3-models.md`; install is a symlink of `skills/*` into `~/.agents/skills/` (see README). |
 | `poteto-mode`, `poteto-agent`, `poteto-help`, `setup-pstack` | `p3-mode`, `agents/p3-agent.md`, `p3-help`, `setup-p3`. |
 | Cursor custom modes ("press option+enter") | Skills are invoked by name (`/p3-mode`). No mode toggles. |
@@ -41,7 +41,7 @@ Keep these names exactly.
 - Thin over complete. Keep the shortest file that still changes behavior. Cut Cursor-only edge-case protocol and forge-specific branches before cutting any rule.
 - pstack's voice: terse, declarative, lowercase-friendly, no filler.
 - Frontmatter: `name`, one-line `description`, `disable-model-invocation: true` where the source has it. Drop Cursor UI fields (`icon`, `color`, `mode`, `reminder`).
-- Use T3 tool names exactly: `delegate_task`, `task_status`, `watch_pull_request`, `link_pull_request`, `schedule_task`, `t3_thread_launch`, `t3_thread_read`, `t3_thread_search`, `preview_*`, `device_*`.
+- Use T3 tool names exactly: `delegate_task`, `task_cancel`, `orchestrator_capabilities`, `watch_pull_request`, `link_pull_request`, `schedule_task`, `t3_thread_launch`, `t3_thread_read`, `t3_thread_search`, `preview_*`, `device_*`.
 - Delegation briefs are self-contained. T3 child agents get only the brief, never the parent's context. Say this where pstack says "every brief stands alone".
 - Never bullet a Cursor tool into a skill, even as a fallback.
 
@@ -53,7 +53,9 @@ Keep these names exactly.
 
 ## T3 tool quick reference
 
-- Delegation: `delegate_task`, `task_status`, `task_cancel`, `orchestrator_capabilities`
+Read [T3 Code execution](skills/p3-mode/references/t3-code.md) before dispatch. It defines current routing, lifecycle, PR-watch, and verification boundaries. Live tool schemas and session instructions take precedence over the map above.
+
+- Delegation: `delegate_task`, `task_cancel`, `orchestrator_capabilities`
 - Threads: `t3_thread_launch`, `create_threads`, `t3_thread_list`, `t3_thread_read`, `t3_thread_search`, `t3_thread_send`, `t3_thread_wait`, `t3_thread_fork`, `t3_thread_merge_back`, `t3_thread_interrupt`, `t3_thread_organize`, `t3_thread_update`, `t3_thread_configure`
 - Worktrees: `t3_worktree_status`, `t3_worktree_list`, `t3_worktree_handoff`
 - Pull requests: `link_pull_request`, `list_thread_pull_requests`, `watch_pull_request`, `unwatch_pull_request`, `unlink_pull_request`

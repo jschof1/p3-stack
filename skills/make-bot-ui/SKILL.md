@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # How to make a bot UI
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Build a page the user clicks. A server on this computer POSTs JSON to a webhook task. The agent wakes with that JSON. Keep the webhook URL on the server. Do not put the webhook URL in the browser or in this skill.
 
 ## Create the webhook task

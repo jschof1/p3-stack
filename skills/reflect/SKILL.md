@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Reflect
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Mine the current conversation for durable learnings, then route them into skill edits.
 
 ## When to invoke
@@ -32,7 +34,7 @@ Resolve each model from the role line in `p3-models.md` via `orchestrator_capabi
 | Tooling | `reflect tooling` | `references/tooling-reviewer.md` |
 | Divergent | `reflect judgment, divergent, synthesizer` | `references/divergent-reviewer.md` |
 
-Pass each template verbatim as the brief, substituting the thread id or digest where marked. Drain with `task_status`; reviewers return findings in their task result.
+Pass each template verbatim as the brief, substituting the thread id or digest where marked. Read completed results, following the tool's `next` instruction; reviewers return findings in their task result.
 
 ### 3. Synthesize
 

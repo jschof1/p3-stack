@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Why
 
+Follow [T3 Code execution](../p3-mode/references/t3-code.md) for tool routing, targets, and completion handling.
+
 Investigate the motivation and intent behind code.
 
 Companion to the `how` skill. `how` answers what the code does and how it works. `why` answers what forces led to its shape.
@@ -77,7 +79,7 @@ Source control is always available through git and `gh`. For the other six, clas
 
 Aim for a complete **coverage map**, not a minimal one. Document the null, don't skip the search.
 
-Issue every matching `delegate_task` call (`mode: "async"`) in a single turn so they run concurrently, then drain with `task_status`. Don't ask one investigator to cover multiple MCPs.
+Issue every matching `delegate_task` call (`mode: "async"`) in a single turn so they run concurrently, then read completed results, following the tool's `next` instruction. Don't ask one investigator to cover multiple MCPs.
 
 Delegation config (each):
 - Provider and model: the `why investigators` line.
